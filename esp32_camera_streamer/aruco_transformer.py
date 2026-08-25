@@ -5,15 +5,12 @@ from geometry_msgs.msg import PoseArray, PoseWithCovarianceStamped
 class ArucoTransformer(Node):
     def __init__(self):
         super().__init__('aruco_transformer')
-        
-        # الاشتراك في موضوع الـ ArUco الافتراضي
         self.subscription = self.create_subscription(
             PoseArray,
             '/aruco_poses',
             self.aruco_callback,
             10)
             
-        # إنشاء الناشر الجديد الذي تحتاجه حزمة robot_localization
         self.publisher = self.create_publisher(
             PoseWithCovarianceStamped,
             '/aruco/pose_covariance',
@@ -22,17 +19,15 @@ class ArucoTransformer(Node):
         self.get_logger().info('Aruco Transformer Node has been started.')
 
     def aruco_callback(self, msg):
-        # التأكد من أن الكاميرا ترى علامة واحدة على الأقل
         if len(msg.poses) > 0:
             pose_covariance_msg = PoseWithCovarianceStamped()
             
-            # نسخ الـ Header (الذي يحتوي على الوقت والـ frame_id مثل camera_link أو odom)
+            marker_id = 0
             pose_covariance_msg.header = msg.header
+            pose_covariance_msg.header.stamp = self.get_clock().now().to_msg()
+            pose_covariance_msg.header.frame_id = f'marker_frame_{marker_id}'
             
-            # أخذ أول علامة مرئية في المصفوفة
             pose_covariance_msg.pose.pose = msg.poses[0]
-            
-            # تعيين مصفوفة التباين (Covariance) - قيم صغيرة تعني ثقة عالية بالـ ArUco
             pose_covariance_msg.pose.covariance = [
                 0.01, 0.0,  0.0,  0.0,  0.0,  0.0,  # X
                 0.0,  0.01, 0.0,  0.0,  0.0,  0.0,  # Y
