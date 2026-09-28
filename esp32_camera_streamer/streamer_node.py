@@ -72,12 +72,13 @@ class ESP32CameraStreamer(Node):
                 np_arr = np.frombuffer(jpg_data, np.uint8)
                 frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
                 if frame is not None:
-                    img_msg = self.bridge.cv2_to_imgmsg(frame, encoding="bgr8")
+                    rotated_frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                    img_msg = self.bridge.cv2_to_imgmsg(rotated_frame, encoding="bgr8")
                     img_msg.header.stamp = now
-                    img_msg.header.frame_id = "camera_link"
+                    img_msg.header.frame_id = "camera_link_optical"
                     self.image_pub.publish(img_msg)
                     self.camera_info_msg.header.stamp = now
-                    self.camera_info_msg.header.frame_id = "camera_link"
+                    self.camera_info_msg.header.frame_id = "camera_link_optical"
                     self.info_pub.publish(self.camera_info_msg)
         except Exception as e:
             self.get_logger().warn(f"Error reading frame: {e}")
